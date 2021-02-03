@@ -20,6 +20,7 @@ mainClassName = "$group.${main}"
 sourceCompatibility = 1.8
 
 repositories {
+    maven { url "http://nexus.devsrsouza.com.br/repository/maven-public/" }
     maven { url 'https://jitpack.io' }
     jcenter()
     mavenCentral()
@@ -28,6 +29,12 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.4.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.4.2"
+    implementation "br.com.devsrsouza:jda-kotlin-command:1.0.1"
+    implementation "club.minnced:jda-reactor:1.0.0"
+    implementation "com.sedmelluq:lavaplayer:1.3.67"
     implementation "net.dv8tion:JDA:4.2.0_227"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
