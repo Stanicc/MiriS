@@ -5,5 +5,6 @@ import net.dv8tion.jda.api.entities.Member
 
 class TrackModel(
     val track: AudioTrack,
-    val member: Member
+    val member: Member,
+    var loop: Boolean = false
 )
