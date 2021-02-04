@@ -14,7 +14,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.VoiceChannel
 import stanic.miris.music.model.TrackModel
 import stanic.miris.utils.getTime
-import stanic.miris.utils.lightPinkColor
+import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.reply
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -32,7 +32,7 @@ class TrackScheduler(
         else {
             val embed = EmbedBuilder()
                 .setAuthor("Music", null, "https://cdn.discordapp.com/emojis/588136836547739768.gif")
-                .setColor(lightPinkColor)
+                .setColor(LIGHT_PINK_COLOR)
                 .setDescription("\uD83C\uDFA7 **Added:** ${track.info.title} \n⏳ **Duration:** ${getTime(track.duration)} \n\n[click here to see in youtube](${track.info.uri})")
                 .setFooter("Now the queue has ${queueList.size} songs", trackModel.member.user.avatarUrl)
                 .build()
@@ -48,7 +48,7 @@ class TrackScheduler(
 
         val embed = EmbedBuilder()
             .setAuthor("Music", null, "https://cdn.discordapp.com/emojis/588136836547739768.gif")
-            .setColor(lightPinkColor)
+            .setColor(LIGHT_PINK_COLOR)
             .setDescription("\uD83C\uDFA7 **Playing:** ${track.info.title} \n⏳ **Duration:** ${getTime(track.duration)} \n\n[click here to see in youtube](${track.info.uri})")
             .setFooter("Requested by ${trackModel.member.nickname ?: trackModel.member.user.name}", trackModel.member.user.avatarUrl)
             .build()
@@ -74,7 +74,7 @@ class TrackScheduler(
 
             val embed = EmbedBuilder()
                 .setAuthor("Music", null, "https://cdn.discordapp.com/emojis/588136836547739768.gif")
-                .setColor(lightPinkColor)
+                .setColor(LIGHT_PINK_COLOR)
                 .setDescription(":x: - The queue was empty, so I stopped playing")
                 .build()
             trackModel.channel.reply(embed)
