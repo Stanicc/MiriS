@@ -58,13 +58,13 @@ class MusicManager {
         channel.sendTyping().queue()
         playerManager.loadItem(identifier, object : AudioLoadResultHandler {
             override fun trackLoaded(track: AudioTrack) {
-                trackScheduler.queue(track, member)
+                trackScheduler.queue(track, member, channel)
             }
             override fun playlistLoaded(playlist: AudioPlaylist) {
                 when {
                     playlist.selectedTrack != null -> trackLoaded(playlist.selectedTrack)
                     playlist.isSearchResult -> trackLoaded(playlist.tracks[0])
-                    else -> for (track in playlist.tracks) trackScheduler.queue(track, member)
+                    else -> for (track in playlist.tracks) trackScheduler.queue(track, member, channel)
                 }
             }
 
