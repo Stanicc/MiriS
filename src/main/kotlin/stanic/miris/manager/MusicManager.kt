@@ -30,6 +30,7 @@ class MusicManager {
     fun getGuildPlayer(guild: Guild) = if (hasPlayer(guild)) players[guild]!!.key else createPlayer(guild)
 
     private fun hasPlayer(guild: Guild) = players.containsKey(guild)
+
     private fun createPlayer(guild: Guild): AudioPlayer {
         val audioPlayer = playerManager.createPlayer()
         val trackScheduler = TrackScheduler(audioPlayer)
@@ -50,22 +51,26 @@ class MusicManager {
 
     fun load(identifier: String, member: Member, channel: TextChannel) {
         val guild = member.guild
-        val audioPlayer = getGuildPlayer(guild)
+        getGuildPlayer(guild)
+
+        val trackScheduler = getGuildTrackScheduler(guild)
 
         channel.sendTyping().queue()
         playerManager.loadItem(identifier, object : AudioLoadResultHandler {
             override fun trackLoaded(track: AudioTrack) {
-                TODO("Not yet implemented")
+                trackScheduler.queue(track, member)
             }
             override fun playlistLoaded(playlist: AudioPlaylist) {
-                TODO("Not yet implemented")
+                when {
+                    playlist.selectedTrack != null -> trackLoaded(playlist.selectedTrack)
+                    playlist.isSearchResult -> trackLoaded(playlist.tracks[0])
+                    else -> for (track in playlist.tracks) trackScheduler.queue(track, member)
+                }
             }
 
             override fun noMatches() {
-                TODO("Not yet implemented")
             }
             override fun loadFailed(exception: FriendlyException) {
-                TODO("Not yet implemented")
             }
         })
     }
