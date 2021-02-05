@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
 import stanic.miris.Main
 import stanic.miris.manager.getMusicManager
 import stanic.miris.music.model.TrackModel
+import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.await
 import stanic.miris.utils.getTime
 import stanic.miris.utils.replyDeleting
@@ -45,6 +46,7 @@ private suspend fun CommandExecutor.runQueueCommand() {
     }
     val queueMessage = channel.sendMessage(EmbedBuilder()
         .setTitle("Queue")
+        .setColor(LIGHT_PINK_COLOR)
         .setDescription("<:menu:781976446418812958> Here's the track list **-** Page $currentPage \n\n\uD83C\uDFA7 **Playing now**: ${playingNow.track.info.title} \n⏳ **Time left:** ${getTime(System.currentTimeMillis() - playingNow.startedTime)} \n\uD83D\uDCCC **Requested by:** ${playingNow.member.asMention} \n\n\n$queueList")
         .build()).await()
     queueMessage.addReaction("◀").queue()
@@ -99,6 +101,7 @@ private suspend fun CommandExecutor.runQueueCommand() {
 
         queueMessage.editMessage(EmbedBuilder()
             .setTitle("Queue")
+            .setColor(LIGHT_PINK_COLOR)
             .setDescription("<:menu:781976446418812958> Here's the track list **-** Page $currentPage \n\n\uD83C\uDFA7 **Playing now**: ${playingNow.track.info.title} \n⏳ **Time left:** ${getTime(System.currentTimeMillis() - playingNow.startedTime)} \n\uD83D\uDCCC **Requested by:** ${playingNow.member.asMention} \n\n\n$queueList")
             .build()).queue()
 

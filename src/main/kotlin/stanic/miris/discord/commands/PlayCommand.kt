@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
 import stanic.miris.Main
 import stanic.miris.manager.getMusicManager
 import stanic.miris.music.model.TrackModel
+import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.await
 import stanic.miris.utils.getTime
 import stanic.miris.utils.replyDeleting
@@ -54,6 +55,7 @@ private suspend fun CommandExecutor.runPlayCommand() {
 
     val loadedMessage = channel.sendMessage(EmbedBuilder()
         .setTitle("Confirm")
+        .setColor(LIGHT_PINK_COLOR)
         .setDescription("<:search:807337010338988083> I searched for what you said, is that what you were looking for? \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\nIf so, click ✅ to ${if (musicManager.getGuildPlayer(guild).playingTrack == null) "add to the queue" else "play"}. If not click on ❌ to do a new search")
         .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
         .build()).await()
@@ -101,6 +103,7 @@ private suspend fun CommandExecutor.runPlayCommand() {
             "❌" -> {
                 val embed = EmbedBuilder()
                     .setTitle("New query")
+                    .setColor(LIGHT_PINK_COLOR)
                     .setDescription("<:search:807337010338988083> Write in that text channel what you want me to search for. \n*Remember to add more details now*")
                     .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                     .build()
@@ -128,6 +131,7 @@ private suspend fun CommandExecutor.runPlayCommand() {
 
                 loadedMessage.editMessage(EmbedBuilder()
                     .setTitle("Confirm")
+                    .setColor(LIGHT_PINK_COLOR)
                     .setDescription("<:search:807337010338988083> I searched for what you said, is that what you were looking for? \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\nIf so, click ✅ to ${if (musicManager.getGuildPlayer(guild).playingTrack == null) "add to the queue" else "play"}. If not click on ❌ to do a new search")
                     .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                     .build()).queue()
