@@ -44,6 +44,7 @@ class TrackScheduler(
         val trackModel = queueList.element()
         val voiceChannel = trackModel.member.voiceState?.channel ?: player.stopTrack().apply { return }
 
+        trackModel.startedTime = track.duration + System.currentTimeMillis()
         trackModel.member.guild.audioManager.openAudioConnection(voiceChannel as VoiceChannel)
 
         val embed = EmbedBuilder()

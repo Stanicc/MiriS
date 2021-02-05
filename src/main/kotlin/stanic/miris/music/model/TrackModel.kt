@@ -8,5 +8,6 @@ class TrackModel(
     val track: AudioTrack,
     val member: Member,
     val channel: TextChannel,
+    var startedTime: Long = track.duration + System.currentTimeMillis(),
     var loop: Boolean = false
 )

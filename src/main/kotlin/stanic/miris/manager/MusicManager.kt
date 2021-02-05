@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 import stanic.miris.music.AudioPlayerSendHandler
 import stanic.miris.music.TrackScheduler
+import stanic.miris.utils.replyDeleting
 import java.util.AbstractMap
 
 class MusicManager {
@@ -45,6 +46,8 @@ class MusicManager {
     fun reset(guild: Guild) {
         if (!hasPlayer(guild)) return
 
+        getGuildTrackScheduler(guild).queueList.clear()
+        getGuildPlayer(guild).stopTrack()
         getGuildPlayer(guild).destroy()
         guild.audioManager.closeAudioConnection()
     }
@@ -69,8 +72,10 @@ class MusicManager {
             }
 
             override fun noMatches() {
+                channel.replyDeleting(":x: | I couldn't find anything with the information you gave")
             }
             override fun loadFailed(exception: FriendlyException) {
+                channel.replyDeleting(":x: | An error has been occurred! Exception: ${exception.message}")
             }
         })
     }
