@@ -24,7 +24,7 @@ class TrackScheduler(
 
     val queueList = LinkedBlockingQueue<TrackModel>()
 
-    fun queue(track: AudioTrack, member: Member, channel: TextChannel) {
+    fun queue(track: AudioTrack, member: Member, channel: TextChannel): TrackModel {
         val trackModel = TrackModel(track, member, channel)
         queueList.add(trackModel)
 
@@ -38,6 +38,8 @@ class TrackScheduler(
                 .build()
             channel.reply(embed)
         }
+
+        return trackModel
     }
 
     override fun onTrackStart(player: AudioPlayer, track: AudioTrack) {
