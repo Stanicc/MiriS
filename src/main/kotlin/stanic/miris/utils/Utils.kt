@@ -17,6 +17,9 @@ fun TextChannel.replyDeleting(message: String, time: Long = 10000) = sendMessage
     }
 }
 fun TextChannel.reply(embed: MessageEmbed) = sendMessage(embed).queue()
+fun TextChannel.reply(embed: MessageEmbed, success: Message.() -> Unit) = sendMessage(embed).queue {
+    it.apply(success)
+}
 fun TextChannel.replyDeleting(embed: MessageEmbed, time: Long = 10000) = sendMessage(embed).queue {
     GlobalScope.launch {
         delay(time)

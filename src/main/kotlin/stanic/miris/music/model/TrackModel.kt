@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 
 class TrackModel(
-    val track: AudioTrack,
+    var track: AudioTrack,
     val member: Member,
     val channel: TextChannel,
     var startedTime: Long = track.duration + System.currentTimeMillis(),

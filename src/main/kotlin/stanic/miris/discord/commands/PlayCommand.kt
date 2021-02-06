@@ -40,8 +40,10 @@ private suspend fun CommandExecutor.runPlayCommand() {
     var query = "ytsearch: "
     for (content in args.indices) query += "${args[content]} "
 
-    val voiceChannel = member.voiceState!!.channel
-    guild.audioManager.openAudioConnection(voiceChannel)
+    if (guild.audioManager.connectedChannel == null) {
+        val voiceChannel = member.voiceState!!.channel
+        guild.audioManager.openAudioConnection(voiceChannel)
+    }
 
     val musicManager = getMusicManager()
 

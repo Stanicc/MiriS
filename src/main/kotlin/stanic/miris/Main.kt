@@ -37,6 +37,11 @@ class Main {
                         registerResumeCommand()
                         registerPauseCommand()
                         registerQueueCommand()
+                        registerSkipCommand()
+                        registerJoinCommand()
+                        registerRestartCommand()
+                        registerInfoCommand()
+                        registerLoopCommand()
                     }
                 }
         }

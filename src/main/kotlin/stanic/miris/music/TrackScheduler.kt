@@ -43,7 +43,7 @@ class TrackScheduler(
     }
 
     override fun onTrackStart(player: AudioPlayer, track: AudioTrack) {
-        val trackModel = queueList.element()
+        val trackModel = if (findTrack(track)!!.loop) findTrack(track)!! else queueList.element()
         val voiceChannel = trackModel.member.voiceState?.channel ?: player.stopTrack().apply { return }
 
         trackModel.startedTime = track.duration + System.currentTimeMillis()
@@ -59,18 +59,22 @@ class TrackScheduler(
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack, endReason: AudioTrackEndReason) {
-        val trackModel = queueList.poll()
+        val trackModel = findTrack(track)!!
         val guild = trackModel.member.guild
 
         if (trackModel.loop) {
             GlobalScope.launch {
                 delay(1000)
 
-                val clone = trackModel.track.makeClone()
+                val clone = track.makeClone()
+                trackModel.track = clone
                 player.playTrack(clone)
+                return@launch
             }
             return
         }
+
+        queueList.poll()
 
         if (queueList.isEmpty()) {
             guild.audioManager.closeAudioConnection()
@@ -78,7 +82,7 @@ class TrackScheduler(
             val embed = EmbedBuilder()
                 .setAuthor("Music", null, "https://cdn.discordapp.com/emojis/588136836547739768.gif")
                 .setColor(LIGHT_PINK_COLOR)
-                .setDescription(":x: - The queue was empty, so I stopped playing")
+                .setDescription("<:yuqicry:807032574018191365> - The queue was empty, so I stopped playing")
                 .build()
             trackModel.channel.reply(embed)
         }
