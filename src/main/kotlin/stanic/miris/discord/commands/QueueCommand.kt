@@ -41,7 +41,8 @@ private suspend fun CommandExecutor.runQueueCommand() {
     var canDispose = false
 
     val queueList = StringBuilder()
-    for (i in 0..10) {
+    if (tracks.isEmpty()) queueList.append("- `The queue is empty`")
+    else for (i in 0..10) {
         if (i + (10 * (currentPage - 1)) < size) queueList.append("`[${getTime(tracks[i + (10 * (currentPage - 1))].track.duration)}]` - ${tracks[i + (10 * (currentPage - 1))].track.info.title} \n")
     }
     val queueMessage = channel.sendMessage(EmbedBuilder()
@@ -49,13 +50,15 @@ private suspend fun CommandExecutor.runQueueCommand() {
         .setColor(LIGHT_PINK_COLOR)
         .setDescription("<:menu:781976446418812958> Here's the track list **-** Page $currentPage \n\n\uD83C\uDFA7 **Playing now**: ${playingNow.track.info.title} \n⏳ **Time left:** ${getTime(System.currentTimeMillis() - playingNow.startedTime)} \n\uD83D\uDCCC **Requested by:** ${playingNow.member.asMention} \n\n\n$queueList")
         .build()).await()
-    queueMessage.addReaction("◀").queue()
-    queueMessage.addReaction("⏭").queue()
+    if (tracks.isNotEmpty()) {
+        queueMessage.addReaction("◀").queue()
+        queueMessage.addReaction("⏭").queue()
+    } else canDispose = true
 
     queueList.clear()
 
     onDispose {
-        delay(30000)
+        delay(20000)
         queueMessage.delete().queue()
         message.delete().queue()
     }

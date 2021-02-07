@@ -34,6 +34,11 @@ fun CommandListDefinition.registerPlayCommand() {
 }
 
 private suspend fun CommandExecutor.runPlayCommand() {
+    onDispose {
+        delay(5000)
+        message.delete().queue()
+    }
+
     if (args.isEmpty()) fail { channel.replyDeleting(":x: | Use **$label** (query or link)") }
     if (member.voiceState == null || !member.voiceState!!.inVoiceChannel()) fail { channel.replyDeleting(":x: | You must be on a voice channel to do that") }
 
@@ -64,15 +69,6 @@ private suspend fun CommandExecutor.runPlayCommand() {
     loadedMessage.addReaction("✅").queue()
     loadedMessage.addReaction("❌").queue()
 
-    onDispose {
-        try {
-            loadedMessage.delete().queue()
-        } catch (ignored: Exception) {}
-
-        delay(5000)
-        message.delete().queue()
-    }
-
     setup {
         on<GuildMessageReceivedEvent>().asFlow()
             .filter { it.channel == channel }
@@ -100,6 +96,9 @@ private suspend fun CommandExecutor.runPlayCommand() {
         when (choice.reactionEmote.name) {
             "✅" -> {
                 musicManager.getGuildTrackScheduler(guild).queue(loadedTrack.track, member, channel)
+                try {
+                    loadedMessage.delete().queue()
+                } catch (ignored: Exception) {}
                 canDispose = true
             }
             "❌" -> {
@@ -122,6 +121,9 @@ private suspend fun CommandExecutor.runPlayCommand() {
                         GlobalScope.launch {
                             delay(5000)
                             it.delete().queue()
+                            try {
+                                loadedMessage.delete().queue()
+                            } catch (ignored: Exception) {}
                         }
                     }
                 }

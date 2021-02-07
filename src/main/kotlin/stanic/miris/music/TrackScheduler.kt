@@ -22,6 +22,7 @@ class TrackScheduler(
     val audioPlayer: AudioPlayer
 ) : AudioEventAdapter() {
 
+    var bassMode = BassMode.OFF
     val queueList = LinkedBlockingQueue<TrackModel>()
 
     fun queue(track: AudioTrack, member: Member, channel: TextChannel): TrackModel {
@@ -105,5 +106,11 @@ class TrackScheduler(
     }
 
     fun findTrack(audioTrack: AudioTrack) = queueList.find { it.track == audioTrack }
+
+    enum class BassMode {
+        OFF, ON, EASY, NORMAL, HARD, INSANE, EXTREME;
+
+        fun getName() = name.substring(0, 1).toUpperCase() + name.substring(1)
+    }
 
 }

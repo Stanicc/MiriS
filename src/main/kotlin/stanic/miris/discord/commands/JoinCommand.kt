@@ -17,7 +17,9 @@ private suspend fun CommandExecutor.runJoinCommand() {
     }
 
     if (member.voiceState == null || !member.voiceState!!.inVoiceChannel()) fail { channel.replyDeleting(":x: | You must be on a voice channel to do that") }
-    if (getMusicManager().getGuildPlayer(guild).playingTrack == null) fail { channel.replyDeleting(":x: | I'm not playing anything right now") }
+    val musicManager = getMusicManager()
+    val guildPlayer = musicManager.getGuildPlayer(guild)
+    if (guildPlayer.playingTrack != null && musicManager.getGuildTrackScheduler(guild).findTrack(guildPlayer.playingTrack)!!.member != member) fail { channel.replyDeleting(":x: | I'm playing a track that someone else has requested for now, wait until the queue ends or your turn comes and try again") }
 
     val voiceChannel = member.voiceState!!.channel
     guild.audioManager.openAudioConnection(voiceChannel)

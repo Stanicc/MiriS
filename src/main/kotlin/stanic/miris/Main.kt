@@ -42,6 +42,8 @@ class Main {
                         registerRestartCommand()
                         registerInfoCommand()
                         registerLoopCommand()
+                        registerVolumeCommand()
+                        registerBassCommand()
                     }
                 }
         }
