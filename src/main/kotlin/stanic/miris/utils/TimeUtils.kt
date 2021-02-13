@@ -11,3 +11,15 @@ fun getTime(time: Long): String {
     else if (days == 0) "${hours}h ${minutes}m"
     else "${days}d ${hours}h"
 }
+
+fun getTime(time: Int): String {
+    val seconds = (time % 60).toString().replace("-".toRegex(), "").toInt()
+    val minutes = (time / 60 % 60).toString().replace("-".toRegex(), "").toInt()
+    val hours = (time / 3600 % 24).toString().replace("-".toRegex(), "").toInt()
+    val days = (time / 86400).toString().replace("-".toRegex(), "").toInt()
+
+    return if (days == 0 && hours == 0 && minutes == 0) "${seconds}s"
+    else if (days == 0 && hours == 0) "${minutes}m ${seconds}s"
+    else if (days == 0) "${hours}h ${minutes}m"
+    else "${days}d ${hours}h"
+}

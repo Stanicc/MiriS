@@ -1,4 +1,4 @@
-package stanic.miris.discord.commands
+package stanic.miris.discord.commands.misc
 
 import br.com.devsrsouza.jda.command.*
 import kotlinx.coroutines.delay

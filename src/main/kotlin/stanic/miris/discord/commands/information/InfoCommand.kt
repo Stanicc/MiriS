@@ -1,4 +1,4 @@
-package stanic.miris.discord.commands
+package stanic.miris.discord.commands.information
 
 import br.com.devsrsouza.jda.command.*
 import kotlinx.coroutines.GlobalScope
