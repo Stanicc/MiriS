@@ -3,29 +3,15 @@ package stanic.miris.discord.commands.search
 import br.com.devsrsouza.jda.command.*
 import br.com.devsrsouza.jda.command.utils.on
 import club.minnced.jda.reactor.on
-import deezer.model.search.TracksSearch
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNot
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitFirst
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.reactive.*
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import stanic.miris.Main
-import stanic.miris.utils.LIGHT_PINK_COLOR
-import stanic.miris.utils.await
-import stanic.miris.utils.getTime
-import stanic.miris.utils.replyDeleting
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import stanic.miris.utils.*
 
 fun CommandListDefinition.registerSearchCommand() {
     command("search") { runSearchCommand() }
@@ -55,7 +41,8 @@ private suspend fun CommandExecutor.runSearchCommand() {
     for (content in args.indices) query += "${args[content]} "
 
     channel.sendTyping().queue()
-    var searchResult = Main.INSTANCE.deezerClient.getTracksSearchResults(TracksSearch(query)).take(10)
+    var searchResult = Main.INSTANCE.searchManager.searchTracks(query, 10)
+    searchResult[0].artists
 
     var canDispose = false
 
@@ -64,7 +51,7 @@ private suspend fun CommandExecutor.runSearchCommand() {
     if (searchResult.isEmpty()) searchList.append("``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1")
     else {
         position = 1
-        for (track in searchResult) searchList.append("``${position++}``. ${track.artist.name} - ${track.title} | [${track.album.title}] \n")
+        for (track in searchResult) searchList.append("``${position++}``. ${track.artists.getFormatted()} - ${track.name} | [${track.album.name}] \n")
         searchList.append("\n\n If the one you want is not in the list, do a new search by clicking \uD83D\uDCA1")
     }
 
@@ -147,11 +134,11 @@ private suspend fun CommandExecutor.runSearchCommand() {
 
                 newQuery.message.delete().queue()
                 searchList.clear()
-                searchResult = Main.INSTANCE.deezerClient.getTracksSearchResults(TracksSearch(query)).take(10)
+                searchResult = Main.INSTANCE.searchManager.searchTracks(query, 10)
                 if (searchResult.isEmpty()) searchList.append("``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1")
                 else {
                     position = 1
-                    for (track in searchResult) searchList.append("``${position++}``. ${track.artist.name} - ${track.title} | [${track.album.title}] \n")
+                    for (track in searchResult) searchList.append("``${position++}``. ${track.artists.getFormatted()} - ${track.name} | [${track.album.name}] \n")
                     searchList.append("\n\n If the one you want is not in the list, do a new search by clicking \uD83D\uDCA1")
                 }
 
@@ -166,17 +153,16 @@ private suspend fun CommandExecutor.runSearchCommand() {
             }
             else -> {
                 try {
-                    val selected = searchResult[reactions[choice.reactionEmote.name]!!]!!
-                    val track = Main.INSTANCE.deezerClient.getTrack(selected.id)
+                    val track = searchResult[reactions[choice.reactionEmote.name]!!]
 
                     searchMessage.editMessage(EmbedBuilder()
                         .setTitle("Search")
                         .setColor(LIGHT_PINK_COLOR)
-                        .setDescription("<:menu:781976446418812958> Here's the track information \n\n__**Track information**__ \n\uD83C\uDFA4 **Artist:** ${track.artist.name} \n\uD83C\uDFA7 **Title:** ${track.title}  \n\uD83D\uDCDA **Album:** ${track.album.title} \n\n⚠ **Explicit:** ${if (track.hasExplicitLyrics) "Yes" else "No"}\n\n" +
+                        .setDescription("<:menu:781976446418812958> Here's the track information \n\n__**Track information**__ \n\uD83C\uDFA4 **Artist:** ${track.artists.getFormatted()} \n\uD83C\uDFA7 **Title:** ${track.name}  \n\uD83D\uDCDA **Album:** ${track.album.name} \n\n⚠ **Explicit:** ${if (track.isExplicit) "Yes" else "No"}\n\n" +
                                 "\uD83D\uDCC6 **Release date:** ${
-                                    if (track.releaseDate != null) "${track.releaseDate.split("-")[2]}/${track.releaseDate.split("-")[1]}/${track.releaseDate.split("-")[0]}" else "Not found"
-                                } \n⏳ **Duration:** ${getTime(track.duration)} \n${if (track.trackPosition == null) "" else "\n\uD83D\uDCCE **Position in album:** ${track.trackPosition}"}\n\uD83C\uDFC6 **Rank in Deezer:** ${track.rank}")
-                        .setThumbnail(track.album.mediumCover.toExternalForm())
+                                    if (track.album.releaseDate != null) "${track.album.releaseDate.split("-")[2]}/${track.album.releaseDate.split("-")[1]}/${track.album.releaseDate.split("-")[0]}" else "Not found"
+                                } \n⏳ **Duration:** ${getTime(track.durationMs.toLong())} \n${if (track.trackNumber == null) "" else "\n\uD83D\uDCCE **Position in album:** ${track.trackNumber}"}\n\uD83C\uDFC6 **Popularity in spotify:** ${track.popularity}")
+                        .setThumbnail(track.album.images.firstOrNull()?.url)
                         .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                         .build()).await()
                     searchMessage.clearReactions().queue()
