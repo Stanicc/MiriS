@@ -1,13 +1,9 @@
 package stanic.miris
 
-import br.com.devsrsouza.jda.command.commands
 import club.minnced.jda.reactor.ReactiveEventManager
 import net.dv8tion.jda.api.*
 import net.dv8tion.jda.api.entities.Activity
-import stanic.miris.discord.commands.music.*
-import stanic.miris.discord.commands.information.*
-import stanic.miris.discord.commands.misc.*
-import stanic.miris.discord.commands.search.*
+import stanic.miris.discord.*
 import stanic.miris.manager.*
 
 class Main {
@@ -34,22 +30,8 @@ class Main {
                     INSTANCE.jda = this
                     MusicManager().start()
 
-                    commands("ms") {
-                        registerPlayCommand()
-                        registerStopCommand()
-                        registerResumeCommand()
-                        registerPauseCommand()
-                        registerQueueCommand()
-                        registerSkipCommand()
-                        registerJoinCommand()
-                        registerRestartCommand()
-                        registerInfoCommand()
-                        registerLoopCommand()
-                        registerVolumeCommand()
-                        registerBassCommand()
-
-                        registerSearchCommand()
-                    }
+                    registerCommands()
+                    registerListeners()
                 }
         }
     }
