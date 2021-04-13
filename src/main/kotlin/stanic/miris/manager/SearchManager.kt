@@ -1,22 +1,21 @@
 package stanic.miris.manager
 
+import com.jagrosh.jlyrics.LyricsClient
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.model_objects.specification.Album
 import com.wrapper.spotify.model_objects.specification.AlbumSimplified
 import com.wrapper.spotify.model_objects.specification.Artist
 import com.wrapper.spotify.model_objects.specification.Track
-import stanic.musixmatchwrapper.MusixMatch
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
 class SearchManager {
 
-    lateinit var musixMatch: MusixMatch
+    val lyrics = LyricsClient("MusixMatch")
     lateinit var spotifyAPI: SpotifyApi
     var spotifyTokenExpires = 0L
 
     fun enable() {
-        musixMatch = MusixMatch("apiKey")
         spotifyAPI = SpotifyApi.Builder()
             .setClientId("client_id")
             .setClientSecret("client_secret")

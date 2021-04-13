@@ -30,6 +30,7 @@ fun JDA.registerCommands() = commands("ms") {
     registerSearchCommand()
     registerArtistCommand()
     registerAlbumCommand()
+    registerLyricsCommand()
 }
 
 fun JDA.registerListeners() {
