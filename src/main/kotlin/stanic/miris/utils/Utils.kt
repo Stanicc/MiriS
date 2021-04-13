@@ -44,3 +44,16 @@ suspend fun <T> RestAction<T>.await() = suspendCoroutine<T> { continuation ->
         continuation::resumeWithException
     )
 }
+
+val searchReactions = linkedMapOf(
+"1️⃣" to 0,
+"2️⃣" to 1,
+"3️⃣" to 2,
+"4️⃣" to 3,
+"5️⃣" to 4,
+"6️⃣" to 5,
+"7️⃣" to 6,
+"8️⃣" to 7,
+"9️⃣" to 8,
+"\uD83D\uDD1F" to 9
+)

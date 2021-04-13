@@ -3,50 +3,44 @@ package stanic.miris.discord.commands.search
 import br.com.devsrsouza.jda.command.*
 import br.com.devsrsouza.jda.command.utils.on
 import club.minnced.jda.reactor.on
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.reactive.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.withTimeoutOrNull
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import stanic.miris.Main
 import stanic.miris.utils.*
 
-fun CommandListDefinition.registerSearchCommand() {
-    command("search") { runSearchCommand() }
-    command("pesquisar") { runSearchCommand() }
-    command("song") { runSearchCommand() }
-    command("track") { runSearchCommand() }
-    command("music") { runSearchCommand() }
-    command("musica") { runSearchCommand() }
+fun CommandListDefinition.registerArtistCommand() {
+    command("artist") { runArtistCommand() }
+    command("artista") { runArtistCommand() }
 }
 
-private suspend fun CommandExecutor.runSearchCommand() {
-    if (args.isEmpty()) fail { channel.replyDeleting(":x: | Use **$label** (query) \n\n▫ For a better search use the following format: **$label** Artist - Song title") }
+private suspend fun CommandExecutor.runArtistCommand() {
+    if (args.isEmpty()) fail { channel.replyDeleting(":x: | Use **$label** (query)") }
 
     var query = ""
     for (content in args.indices) query += "${args[content]} "
 
     channel.sendTyping().queue()
-    var searchResult = Main.INSTANCE.searchManager.searchTracks(query, 10)
+    var artist = Main.INSTANCE.searchManager.searchArtist(query)
 
-    var canDispose = false
-
-    var position: Int
-    val searchList = StringBuilder()
-    if (searchResult.isEmpty()) searchList.append("``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1")
-    else {
-        position = 1
-        for (track in searchResult) searchList.append("``${position++}``. ${track.artists.getFormatted()} - ${track.name} | [${track.album.name}] \n")
-        searchList.append("\n\n If the one you want is not in the list, do a new search by clicking \uD83D\uDCA1")
-    }
-
+    var description = if (artist == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${artist.name} \n[spotify link](${artist.externalUrls.externalUrls["spotify"]}) \n\nIf you want to do a new search click on \uD83D\uDCA1"
     val searchMessage = channel.sendMessage(
         EmbedBuilder()
-            .setTitle("Search")
+            .setTitle("Artist search")
             .setColor(LIGHT_PINK_COLOR)
-            .setDescription("<:menu:781976446418812958> Here's the track list **-** Select the right one by clicking on the emote for her position \n\n$searchList")
+            .setDescription(description)
+            .setThumbnail(artist?.images?.firstOrNull()?.url)
             .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
             .build()
     ).await()
@@ -65,22 +59,21 @@ private suspend fun CommandExecutor.runSearchCommand() {
             .launchIn(GlobalScope)
         on<GuildMessageReactionAddEvent>().asFlow()
             .filter { it.messageIdLong == searchMessage.idLong }
-            .filterNot { searchReactions.containsKey(it.reactionEmote.name) || it.reactionEmote.name == "\uD83D\uDCA1" }
+            .filterNot { it.reactionEmote.name == "✅" || it.reactionEmote.name == "\uD83D\uDCA1" }
             .onEach { it.reaction.removeReaction(it.user).submit().await() }
             .launchIn(GlobalScope)
     }
-
-    searchReactions.keys.take(searchResult.size).forEach { searchMessage.addReaction(it).queue() }
+    if (artist != null) searchMessage.addReaction("✅").queue()
     searchMessage.addReaction("\uD83D\uDCA1").queue()
 
-    searchList.clear()
+    var canDispose = false
 
     while (!canDispose) {
         val choice = withTimeoutOrNull(20000) {
             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                 .filter { it.messageIdLong == searchMessage.idLong }
                 .filter { !it.user.isBot }
-                .filter { searchReactions.containsKey(it.reactionEmote.name) || it.reactionEmote.name == "\uD83D\uDCA1" }
+                .filter { it.reactionEmote.name == "✅" || it.reactionEmote.name == "\uD83D\uDCA1" }
                 .awaitFirst()
         } ?: fail {
             canDispose = true
@@ -120,36 +113,26 @@ private suspend fun CommandExecutor.runSearchCommand() {
                 query = newQuery.message.contentRaw
 
                 newQuery.message.delete().queue()
-                searchList.clear()
-                searchResult = Main.INSTANCE.searchManager.searchTracks(query, 10)
-                if (searchResult.isEmpty()) searchList.append("``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1")
-                else {
-                    position = 1
-                    for (track in searchResult) searchList.append("``${position++}``. ${track.artists.getFormatted()} - ${track.name} | [${track.album.name}] \n")
-                    searchList.append("\n\n If the one you want is not in the list, do a new search by clicking \uD83D\uDCA1")
-                }
+                artist = Main.INSTANCE.searchManager.searchArtist(query)
+                description = if (artist == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${artist.name} \n[spotify link](${artist.href}) \n\nIf you want to do a new search click on \uD83D\uDCA1"
 
                 searchMessage.editMessage(EmbedBuilder()
-                    .setTitle("Search")
+                    .setTitle("Artist search")
                     .setColor(LIGHT_PINK_COLOR)
-                    .setDescription("<:menu:781976446418812958> Here's the track list **-** Select the right one by clicking on the emote for her position \n\n$searchList")
+                    .setDescription(description)
+                    .setThumbnail(artist?.images?.firstOrNull()?.url)
                     .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                     .build()).await()
-                searchReactions.keys.take(searchResult.size).forEach { searchMessage.addReaction(it).queue() }
+                if (artist != null) searchMessage.addReaction("✅").queue()
                 searchMessage.addReaction("\uD83D\uDCA1").queue()
             }
             else -> {
                 try {
-                    val track = searchResult[searchReactions[choice.reactionEmote.name]!!]
-
                     searchMessage.editMessage(EmbedBuilder()
-                        .setTitle("Search")
+                        .setTitle("Artist search")
                         .setColor(LIGHT_PINK_COLOR)
-                        .setDescription("<:menu:781976446418812958> Here's the track information \n\n__**Track information**__ \n\uD83C\uDFA4 **Artist:** ${track.artists.getFormatted()} \n\uD83C\uDFA7 **Title:** ${track.name}  \n\uD83D\uDCDA **Album:** ${track.album.name} \n\n⚠ **Explicit:** ${if (track.isExplicit) "Yes" else "No"}\n\n" +
-                                "\uD83D\uDCC6 **Release date:** ${
-                                    if (track.album.releaseDate != null) "${track.album.releaseDate.split("-")[2]}/${track.album.releaseDate.split("-")[1]}/${track.album.releaseDate.split("-")[0]}" else "Not found"
-                                } \n⏳ **Duration:** ${getTime(track.durationMs.toLong())} \n${if (track.trackNumber == null) "" else "\n\uD83D\uDCCE **Position in album:** ${track.trackNumber}"}\n\uD83C\uDFC6 **Popularity in spotify:** ${track.popularity}")
-                        .setThumbnail(track.album.images.firstOrNull()?.url)
+                        .setDescription("<:menu:781976446418812958> Here's the artist information \n\n__**Artist information**__ \n\uD83D\uDCC4 **Artist:** ${artist!!.name} \n\uD83D\uDC8D **Followers:** ${artist.followers.total} \n\uD83D\uDCCE **Genres:** ${if (artist.genres.isEmpty()) "Not found" else artist.genres.getFormatted()} \n\n❤ **Popularity:** ${artist.popularity}% \n\n\uD83D\uDCCC [spotify link](${artist.externalUrls.externalUrls["spotify"]})")
+                        .setThumbnail(artist.images.first().url)
                         .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                         .build()).await()
                     searchMessage.clearReactions().queue()

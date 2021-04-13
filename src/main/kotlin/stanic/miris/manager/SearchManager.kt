@@ -1,6 +1,9 @@
 package stanic.miris.manager
 
 import com.wrapper.spotify.SpotifyApi
+import com.wrapper.spotify.model_objects.specification.Album
+import com.wrapper.spotify.model_objects.specification.AlbumSimplified
+import com.wrapper.spotify.model_objects.specification.Artist
 import com.wrapper.spotify.model_objects.specification.Track
 import stanic.musixmatchwrapper.MusixMatch
 import java.net.URI
@@ -30,6 +33,34 @@ class SearchManager {
             .build()
             .executeAsync()
         return future.join().items.toList()
+    }
+
+    fun searchArtist(query: String): Artist? {
+        updateSpotifyAccessToken()
+
+        val future = spotifyAPI.searchArtists(query)
+            .build()
+            .executeAsync()
+        return future.join().items.toList().firstOrNull()
+    }
+
+    fun searchAlbums(query: String, limit: Int): List<AlbumSimplified> {
+        updateSpotifyAccessToken()
+
+        val future = spotifyAPI.searchAlbums(query)
+            .limit(limit)
+            .build()
+            .executeAsync()
+        return future.join().items.toList()
+    }
+
+    fun getAlbum(id: String): Album? {
+        updateSpotifyAccessToken()
+
+        val future = spotifyAPI.getAlbum(id)
+            .build()
+            .executeAsync()
+        return future.join()
     }
 
     private fun updateSpotifyAccessToken() {
