@@ -16,12 +16,9 @@ fun CommandListDefinition.registerInfoCommand() {
     command("playing") { runInfoCommand() }
     command("playingnow") { runInfoCommand() }
     command("nowplaying") { runInfoCommand() }
-    command("track") { runInfoCommand() }
-    command("music") { runInfoCommand() }
     command("tocando") { runInfoCommand() }
     command("tocandoagora") { runInfoCommand() }
     command("agoratocando") { runInfoCommand() }
-    command("musica") { runInfoCommand() }
 }
 
 private suspend fun CommandExecutor.runInfoCommand() {
