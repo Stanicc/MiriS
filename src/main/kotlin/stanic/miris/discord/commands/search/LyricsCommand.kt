@@ -3,7 +3,6 @@ package stanic.miris.discord.commands.search
 import br.com.devsrsouza.jda.command.*
 import br.com.devsrsouza.jda.command.utils.on
 import club.minnced.jda.reactor.on
-import com.jagrosh.jlyrics.Lyrics
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
@@ -18,15 +17,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
-import org.json.JSONObject
-import org.json.XML
-import org.jsoup.Jsoup
 import stanic.miris.Main
 import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.await
-import stanic.miris.utils.getMusixMatchTrackImage
 import stanic.miris.utils.replyDeleting
-
 
 fun CommandListDefinition.registerLyricsCommand() {
     command("lyrics") { runLyricsCommand() }
@@ -42,15 +36,16 @@ private suspend fun CommandExecutor.runLyricsCommand() {
     for (content in args.indices) query += "${args[content]} "
 
     channel.sendTyping().queue()
-    var lyrics = Main.INSTANCE.searchManager.lyrics.getLyrics(query).join()
+    var lyrics = Main.INSTANCE.searchManager.searchLyrics(query)
 
-    var description = if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
+    var description =
+        if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
     val searchMessage = channel.sendMessage(
         EmbedBuilder()
             .setTitle("Lyrics search")
             .setColor(LIGHT_PINK_COLOR)
             .setDescription(description)
-            .setThumbnail(getMusixMatchTrackImage(query))
+            .setThumbnail(lyrics?.image)
             .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
             .build()
     ).await()
@@ -58,9 +53,10 @@ private suspend fun CommandExecutor.runLyricsCommand() {
     onDispose {
         message.delete().queue()
         try {
-            delay(20000)
+            delay(120000)
             searchMessage.delete().queue()
-        } catch (ignored: Exception) {}
+        } catch (ignored: Exception) {
+        }
     }
 
     setup {
@@ -69,7 +65,7 @@ private suspend fun CommandExecutor.runLyricsCommand() {
             .launchIn(GlobalScope)
         on<GuildMessageReactionAddEvent>().asFlow()
             .filter { it.messageIdLong == searchMessage.idLong }
-            .filterNot { it.reactionEmote.name == "✅" || it.reactionEmote.name == "\uD83D\uDCA1" }
+            .filterNot { it.reactionEmote.name == "✅" || it.reactionEmote.name == "\uD83D\uDCA1" || it.reactionEmote.name == "▶" || it.reactionEmote.name == "◀" }
             .onEach { it.reaction.removeReaction(it.user).submit().await() }
             .launchIn(GlobalScope)
     }
@@ -79,7 +75,7 @@ private suspend fun CommandExecutor.runLyricsCommand() {
     var canDispose = false
 
     while (!canDispose) {
-        val choice = withTimeoutOrNull(20000) {
+        var choice = withTimeoutOrNull(20000) {
             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                 .filter { it.messageIdLong == searchMessage.idLong }
                 .filter { !it.user.isBot }
@@ -89,7 +85,8 @@ private suspend fun CommandExecutor.runLyricsCommand() {
             canDispose = true
             try {
                 searchMessage.delete().queue()
-            } catch (ignored: Exception) {}
+            } catch (ignored: Exception) {
+            }
         }
 
         when (choice.reactionEmote.name) {
@@ -115,7 +112,8 @@ private suspend fun CommandExecutor.runLyricsCommand() {
                             it.delete().queue()
                             try {
                                 searchMessage.delete().queue()
-                            } catch (ignored: Exception) {}
+                            } catch (ignored: Exception) {
+                            }
                         }
                     }
                 }
@@ -123,34 +121,106 @@ private suspend fun CommandExecutor.runLyricsCommand() {
                 query = newQuery.message.contentRaw
 
                 newQuery.message.delete().queue()
-                lyrics = Main.INSTANCE.searchManager.lyrics.getLyrics(query).join()
+                lyrics = Main.INSTANCE.searchManager.searchLyrics(query)
 
-                description = if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
+                description =
+                    if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
                 searchMessage.editMessage(
                     EmbedBuilder()
-                    .setTitle("Lyrics search")
-                    .setColor(LIGHT_PINK_COLOR)
-                    .setDescription(description)
-                    .setThumbnail(getMusixMatchTrackImage(query))
-                    .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
-                    .build()).await()
+                        .setTitle("Lyrics search")
+                        .setColor(LIGHT_PINK_COLOR)
+                        .setDescription(description)
+                        .setThumbnail(lyrics?.image)
+                        .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
+                        .build()
+                ).await()
                 if (lyrics != null) searchMessage.addReaction("✅").queue()
                 searchMessage.addReaction("\uD83D\uDCA1").queue()
             }
             else -> {
-                try {
-                        searchMessage.editMessage(
-                            EmbedBuilder()
+                val pages = ArrayList<String>(lyrics!!.content.chunked(1000))
+                var currentPage = 0
+
+                if (pages.size == 1) {
+                    searchMessage.editMessage(
+                        EmbedBuilder()
                             .setTitle("Lyrics search")
                             .setColor(LIGHT_PINK_COLOR)
                             .setDescription("<:menu:781976446418812958> Here's the lyrics information \n\n__**Lyrics information**__ \n\uD83C\uDFA7 **Title:** ${lyrics.title} \n\uD83D\uDCC4 **Artist:** ${lyrics.author} \n\n${lyrics.content}")
-                            .setThumbnail(getMusixMatchTrackImage(query))
+                            .setThumbnail(lyrics.image)
                             .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
-                            .build()).await()
+                            .build()
+                    ).await()
                     searchMessage.clearReactions().queue()
-                } catch (ignored: ArrayIndexOutOfBoundsException) {}
+                    canDispose = true
+                } else {
+                    var content = pages[currentPage]
 
-                canDispose = true
+                    searchMessage.editMessage(
+                        EmbedBuilder()
+                            .setTitle("Lyrics search")
+                            .setColor(LIGHT_PINK_COLOR)
+                            .setDescription("<:menu:781976446418812958> Here's the lyrics information \n\n__**Lyrics information**__ \n\uD83C\uDFA7 **Title:** ${lyrics.title} \n\uD83D\uDCD6 **Page:** ${currentPage + 1}/${pages.size} \n\uD83D\uDCC4 **Artist:** ${lyrics.author} \n\n$content${if (pages.size > (currentPage + 1)) "**-** \n\n*Change the page to continue the lyrics*" else ""}")
+                            .setThumbnail(lyrics.image)
+                            .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
+                            .build()
+                    ).await()
+                    searchMessage.clearReactions().queue()
+
+                    searchMessage.addReaction("◀").queue()
+                    searchMessage.addReaction("▶").queue()
+
+                    while (!canDispose) {
+                        choice = withTimeoutOrNull(20000) {
+                            Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
+                                .filter { it.messageIdLong == searchMessage.idLong }
+                                .filter { !it.user.isBot }
+                                .filter { it.reactionEmote.name == "▶" || it.reactionEmote.name == "◀" }
+                                .awaitFirst()
+                        } ?: fail { canDispose = true }
+
+                        when (choice.reactionEmote.name) {
+                            "▶" -> {
+                                if ((currentPage + 1) <= pages.size) {
+                                    currentPage += 1
+                                    content = pages[currentPage]
+
+                                    searchMessage.editMessage(
+                                        EmbedBuilder()
+                                            .setTitle("Lyrics search")
+                                            .setColor(LIGHT_PINK_COLOR)
+                                            .setDescription("<:menu:781976446418812958> Here's the lyrics information \n\n__**Lyrics information**__ \n\uD83C\uDFA7 **Title:** ${lyrics.title} \n\uD83D\uDCD6 **Page:** ${currentPage + 1}/${pages.size} \n\uD83D\uDCC4 **Artist:** ${lyrics.author} \n\n$content${if (pages.size > (currentPage + 1)) "**-** \n\n*Change the page to continue the lyrics*" else ""}")
+                                            .setThumbnail(lyrics.image)
+                                            .setFooter(
+                                                "Requested by ${member.nickname ?: member.user.name}",
+                                                member.user.avatarUrl
+                                            )
+                                            .build()
+                                    ).await()
+                                }
+                            }
+                            "◀" -> {
+                                if (currentPage != 0) {
+                                    currentPage -= 1
+                                    searchMessage.editMessage(
+                                        EmbedBuilder()
+                                            .setTitle("Lyrics search")
+                                            .setColor(LIGHT_PINK_COLOR)
+                                            .setDescription("<:menu:781976446418812958> Here's the lyrics information \n\n__**Lyrics information**__ \n\uD83C\uDFA7 **Title:** ${lyrics.title} \n\uD83D\uDCD6 **Page:** ${currentPage + 1}/${pages.size} \n\uD83D\uDCC4 **Artist:** ${lyrics.author} \n\n$content${if (pages.size > (currentPage + 1)) "**-** \n\n*Change the page page to continue the lyrics*" else ""}")
+                                            .setThumbnail(lyrics.image)
+                                            .setFooter(
+                                                "Requested by ${member.nickname ?: member.user.name}",
+                                                member.user.avatarUrl
+                                            )
+                                            .build()
+                                    ).await()
+                                }
+                            }
+                        }
+
+                        choice.reaction.removeReaction(member.user).queue()
+                    }
+                }
             }
         }
     }
