@@ -1,4 +1,4 @@
-package stanic.miris.discord.commands.music
+package stanic.miris.discord.commands.effect
 
 import br.com.devsrsouza.jda.command.*
 import com.sedmelluq.discord.lavaplayer.filter.equalizer.EqualizerFactory
