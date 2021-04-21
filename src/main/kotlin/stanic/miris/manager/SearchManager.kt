@@ -1,17 +1,18 @@
 package stanic.miris.manager
 
-import com.jagrosh.jlyrics.LyricsClient
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.model_objects.specification.Album
 import com.wrapper.spotify.model_objects.specification.AlbumSimplified
 import com.wrapper.spotify.model_objects.specification.Artist
 import com.wrapper.spotify.model_objects.specification.Track
+import stanic.musixmatchwrapper.MusixMatch
+import stanic.musixmatchwrapper.model.Lyrics
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
 class SearchManager {
 
-    val lyrics = LyricsClient("MusixMatch")
+    val musixMatch = MusixMatch("apiKey")
     lateinit var spotifyAPI: SpotifyApi
     var spotifyTokenExpires = 0L
 
@@ -61,6 +62,8 @@ class SearchManager {
             .executeAsync()
         return future.join()
     }
+
+    fun searchLyrics(query: String): Lyrics? = musixMatch.searchLyrics(query).join()
 
     private fun updateSpotifyAccessToken() {
         if (System.currentTimeMillis() < spotifyTokenExpires) return
