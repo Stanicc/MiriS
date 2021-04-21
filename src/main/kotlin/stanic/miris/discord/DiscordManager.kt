@@ -24,6 +24,7 @@ fun JDA.registerCommands() = commands("ms") {
 
     //misc
     registerJoinCommand()
+    registerDownloadCommand()
 
     //information
     registerInfoCommand()
