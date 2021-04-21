@@ -38,8 +38,7 @@ dependencies {
     implementation "net.dv8tion:JDA:4.2.0_227"
     implementation "com.google.code.gson:gson:2.8.6"
     implementation "se.michaelthelin.spotify:spotify-web-api-java:6.5.3"
-    implementation "com.jagrosh:JLyrics:0.4"
-    implementation "org.jsoup:jsoup:1.11.3"
+    implementation files("libs/MusixmatchWrapper.jar")
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
