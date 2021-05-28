@@ -15,13 +15,10 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.withTimeoutOrNull
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import stanic.miris.Main
 import stanic.miris.manager.getMusicManager
-import stanic.miris.music.model.TrackModel
 import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.await
 import stanic.miris.utils.getTime
@@ -42,7 +39,7 @@ private suspend fun CommandExecutor.runPlayCommand() {
     if (args.isEmpty()) fail { channel.replyDeleting(":x: | Use **$label** (query or link)") }
     if (member.voiceState == null || !member.voiceState!!.inVoiceChannel()) fail { channel.replyDeleting(":x: | You must be on a voice channel to do that") }
 
-    var query = "ytsearch: "
+    var query = ""
     for (content in args.indices) query += "${args[content]} "
 
     if (guild.audioManager.connectedChannel == null) {
@@ -52,10 +49,13 @@ private suspend fun CommandExecutor.runPlayCommand() {
 
     val musicManager = getMusicManager()
 
-    if (query.replaceFirst("ytsearch: ", "").startsWith("http")) {
-        musicManager.load(query, member, channel)
+    message.delete().queue()
+
+    if (query.startsWith("http")) {
+        musicManager.load(query.replace(" ", ""), member, channel)
         return
     }
+    query = "ytsearch: $query"
 
     var loadedTrack = musicManager.loadWaiting(query, member, channel) ?: fail {}
     var canDispose = false

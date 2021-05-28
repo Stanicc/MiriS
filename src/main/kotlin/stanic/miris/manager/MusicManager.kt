@@ -61,7 +61,7 @@ class MusicManager {
         val trackScheduler = getGuildTrackScheduler(guild)
 
         channel.sendTyping().queue()
-        playerManager.loadItem(identifier, object : AudioLoadResultHandler {
+        playerManager.loadItemOrdered(trackScheduler, identifier, object : AudioLoadResultHandler {
             override fun trackLoaded(track: AudioTrack) {
                 trackScheduler.queue(track, member, channel)
             }
@@ -69,7 +69,15 @@ class MusicManager {
                 when {
                     playlist.selectedTrack != null -> trackLoaded(playlist.selectedTrack)
                     playlist.isSearchResult -> trackLoaded(playlist.tracks[0])
-                    else -> for (track in playlist.tracks) trackScheduler.queue(track, member, channel)
+                    else -> {
+                        channel.replyDeleting("Loading **${playlist.tracks.size}** tracks...")
+                        for (track in playlist.tracks) {
+                            trackScheduler.queue(track, member, channel, true)
+                        }
+                        trackScheduler.run {
+                            if (audioPlayer.playingTrack == null) audioPlayer.playTrack(queueList.element().track)
+                        }
+                    }
                 }
             }
 

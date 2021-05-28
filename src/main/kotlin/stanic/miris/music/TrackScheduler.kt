@@ -25,19 +25,21 @@ class TrackScheduler(
     var bassMode = BassMode.OFF
     val queueList = LinkedBlockingQueue<TrackModel>()
 
-    fun queue(track: AudioTrack, member: Member, channel: TextChannel): TrackModel {
+    fun queue(track: AudioTrack, member: Member, channel: TextChannel, playlistLoading: Boolean = false): TrackModel {
         val trackModel = TrackModel(track, member, channel)
         queueList.add(trackModel)
 
-        if (audioPlayer.playingTrack == null) audioPlayer.playTrack(track)
-        else {
-            val embed = EmbedBuilder()
-                .setAuthor("Music", null, "https://cdn.discordapp.com/emojis/588136836547739768.gif")
-                .setColor(LIGHT_PINK_COLOR)
-                .setDescription("\uD83C\uDFA7 **Added:** ${track.info.title} \n⏳ **Duration:** ${getTime(track.duration)} \n\n[click here to see in youtube](${track.info.uri})")
-                .setFooter("Now the queue has ${queueList.size} songs", trackModel.member.user.avatarUrl)
-                .build()
-            channel.reply(embed)
+        if (!playlistLoading) {
+            if (audioPlayer.playingTrack == null) audioPlayer.playTrack(track)
+            else {
+                val embed = EmbedBuilder()
+                    .setAuthor("Music", null, "https://cdn.discordapp.com/emojis/588136836547739768.gif")
+                    .setColor(LIGHT_PINK_COLOR)
+                    .setDescription("\uD83C\uDFA7 **Added:** ${track.info.title} \n⏳ **Duration:** ${getTime(track.duration)} \n\n[click here to see in youtube](${track.info.uri})")
+                    .setFooter("Now the queue has ${queueList.size} songs", trackModel.member.user.avatarUrl)
+                    .build()
+                channel.reply(embed)
+            }
         }
 
         return trackModel
