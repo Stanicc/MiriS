@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.30'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
     id "com.github.johnrengelman.shadow" version "5.2.0"
     id 'application'
 }
@@ -21,6 +21,7 @@ sourceCompatibility = 1.8
 
 repositories {
     maven { url "http://nexus.devsrsouza.com.br/repository/maven-public/" }
+    maven { url "https://m2.dv8tion.net/releases/" }
     maven { url 'https://jitpack.io' }
     jcenter()
     mavenCentral()
@@ -34,12 +35,12 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.4.2"
     implementation "br.com.devsrsouza:jda-kotlin-command:1.0.1"
     implementation "club.minnced:jda-reactor:1.0.0"
-    implementation "com.sedmelluq:lavaplayer:1.3.67"
-    implementation "net.dv8tion:JDA:4.2.0_227"
+    implementation "net.dv8tion:JDA:4.2.1_265"
+    implementation "com.sedmelluq:lavaplayer:1.3.77"
     implementation "com.google.code.gson:gson:2.8.6"
-    implementation "se.michaelthelin.spotify:spotify-web-api-java:6.5.3"
     implementation "com.github.sealedtx:java-youtube-downloader:2.5.2"
     implementation files("libs/MusixmatchWrapper.jar")
+    implementation files("libs/spotify-web-api-java.jar")
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
