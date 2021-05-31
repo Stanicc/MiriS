@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
 import stanic.miris.Main
 import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.await
+import stanic.miris.utils.bot.*
 import stanic.miris.utils.replyDeleting
 
 fun CommandListDefinition.registerLyricsCommand() {
@@ -39,7 +40,7 @@ private suspend fun CommandExecutor.runLyricsCommand() {
     var lyrics = Main.INSTANCE.searchManager.searchLyrics(query)
 
     var description =
-        if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
+        if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ${YES_PINK.asMention} to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
     val searchMessage = channel.sendMessage(
         EmbedBuilder()
             .setTitle("Lyrics search")
@@ -65,11 +66,11 @@ private suspend fun CommandExecutor.runLyricsCommand() {
             .launchIn(GlobalScope)
         on<GuildMessageReactionAddEvent>().asFlow()
             .filter { it.messageIdLong == searchMessage.idLong }
-            .filterNot { it.reactionEmote.name == "✅" || it.reactionEmote.name == "\uD83D\uDCA1" || it.reactionEmote.name == "▶" || it.reactionEmote.name == "◀" }
+            .filterNot { it.reactionEmote.name == YES_PINK.name || it.reactionEmote.name == "\uD83D\uDCA1" || it.reactionEmote.name == PINK_ARROW_RIGHT.name || it.reactionEmote.name == PINK_ARROW_LEFT.name }
             .onEach { it.reaction.removeReaction(it.user).submit().await() }
             .launchIn(GlobalScope)
     }
-    if (lyrics != null) searchMessage.addReaction("✅").queue()
+    if (lyrics != null) searchMessage.addReaction(YES_PINK).queue()
     searchMessage.addReaction("\uD83D\uDCA1").queue()
 
     var canDispose = false
@@ -79,7 +80,7 @@ private suspend fun CommandExecutor.runLyricsCommand() {
             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                 .filter { it.messageIdLong == searchMessage.idLong }
                 .filter { !it.user.isBot }
-                .filter { it.reactionEmote.name == "✅" || it.reactionEmote.name == "\uD83D\uDCA1" }
+                .filter { it.reactionEmote.name == YES_PINK.name || it.reactionEmote.name == "\uD83D\uDCA1" }
                 .awaitFirst()
         } ?: fail {
             canDispose = true
@@ -124,7 +125,7 @@ private suspend fun CommandExecutor.runLyricsCommand() {
                 lyrics = Main.INSTANCE.searchManager.searchLyrics(query)
 
                 description =
-                    if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ✅ to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
+                    if (lyrics == null) "``-`` I couldn't find anything! If you want to do a new search click on \uD83D\uDCA1" else "<:menu:781976446418812958> Here's the found artist **-** If that is what you were looking for click on ${YES_PINK.asMention} to see the information \n\nName: ${lyrics.title} \nArtist: ${lyrics.author} \n\nIf you want to do a new search click on \uD83D\uDCA1"
                 searchMessage.editMessage(
                     EmbedBuilder()
                         .setTitle("Lyrics search")
@@ -134,7 +135,7 @@ private suspend fun CommandExecutor.runLyricsCommand() {
                         .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                         .build()
                 ).await()
-                if (lyrics != null) searchMessage.addReaction("✅").queue()
+                if (lyrics != null) searchMessage.addReaction(YES_PINK).queue()
                 searchMessage.addReaction("\uD83D\uDCA1").queue()
             }
             else -> {
@@ -167,21 +168,21 @@ private suspend fun CommandExecutor.runLyricsCommand() {
                     ).await()
                     searchMessage.clearReactions().queue()
 
-                    searchMessage.addReaction("◀").queue()
-                    searchMessage.addReaction("▶").queue()
+                    searchMessage.addReaction(PINK_ARROW_LEFT).queue()
+                    searchMessage.addReaction(PINK_ARROW_RIGHT).queue()
 
                     while (!canDispose) {
                         choice = withTimeoutOrNull(20000) {
                             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                                 .filter { it.messageIdLong == searchMessage.idLong }
                                 .filter { !it.user.isBot }
-                                .filter { it.reactionEmote.name == "▶" || it.reactionEmote.name == "◀" }
+                                .filter { it.reactionEmote.name == PINK_ARROW_RIGHT.name || it.reactionEmote.name == PINK_ARROW_LEFT.name }
                                 .awaitFirst()
                         } ?: fail { canDispose = true }
 
                         when (choice.reactionEmote.name) {
-                            "▶" -> {
-                                if ((currentPage + 1) <= pages.size) {
+                            PINK_ARROW_RIGHT.name -> {
+                                if (currentPage < (pages.size - 1)) {
                                     currentPage += 1
                                     content = pages[currentPage]
 
@@ -199,9 +200,11 @@ private suspend fun CommandExecutor.runLyricsCommand() {
                                     ).await()
                                 }
                             }
-                            "◀" -> {
+                            PINK_ARROW_LEFT.name -> {
                                 if (currentPage != 0) {
                                     currentPage -= 1
+                                    content = pages[currentPage]
+
                                     searchMessage.editMessage(
                                         EmbedBuilder()
                                             .setTitle("Lyrics search")

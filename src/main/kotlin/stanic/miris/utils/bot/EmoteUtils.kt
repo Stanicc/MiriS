@@ -1,0 +1,37 @@
+package stanic.miris.utils.bot
+
+import net.dv8tion.jda.api.entities.Emote
+import stanic.miris.Main
+
+private val GUILD_EMOTES = Main.INSTANCE.jda.getGuildById("757379359060525099")!!
+
+val PINK_ARROW_LEFT = GUILD_EMOTES.getEmoteById("848357682728927252")!!
+val PINK_ARROW_RIGHT = GUILD_EMOTES.getEmoteById("848206434113028168")!!
+
+val NUMBER_ZERO = GUILD_EMOTES.getEmoteById("847930575745581066")!!
+val NUMBER_ONE = GUILD_EMOTES.getEmoteById("847930354361827338")!!
+val NUMBER_TWO = GUILD_EMOTES.getEmoteById("847930521953632286")!!
+val NUMBER_THREE = GUILD_EMOTES.getEmoteById("847930677546582016")!!
+val NUMBER_FOUR = GUILD_EMOTES.getEmoteById("847930750363631619")!!
+val NUMBER_FIVE = GUILD_EMOTES.getEmoteById("847930879787532300")!!
+val NUMBER_SIX = GUILD_EMOTES.getEmoteById("847930939241922560")!!
+val NUMBER_SEVEN = GUILD_EMOTES.getEmoteById("847931009001455616")!!
+val NUMBER_EIGHT = GUILD_EMOTES.getEmoteById("847931061748367361")!!
+val NUMBER_NINE = GUILD_EMOTES.getEmoteById("847931148445155358")!!
+
+val YES_PINK = GUILD_EMOTES.getEmoteById("848206733612810280")!!
+val NO_PINK = GUILD_EMOTES.getEmoteById("848206774968647681")!!
+
+val SEARCH_REACTIONS = linkedMapOf(
+    NUMBER_ZERO to 0,
+    NUMBER_ONE to 1,
+    NUMBER_TWO to 2,
+    NUMBER_THREE to 3,
+    NUMBER_FOUR to 4,
+    NUMBER_FIVE to 5,
+    NUMBER_SIX to 6,
+    NUMBER_SEVEN to 7,
+    NUMBER_EIGHT to 8,
+    NUMBER_NINE to 9
+)
+fun Map<out Emote, *>.containsKeyWithName(name: String) = keys.find { it.name == name } != null

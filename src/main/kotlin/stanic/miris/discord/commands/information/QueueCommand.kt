@@ -20,6 +20,8 @@ import stanic.miris.manager.getMusicManager
 import stanic.miris.music.model.TrackModel
 import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.await
+import stanic.miris.utils.bot.PINK_ARROW_LEFT
+import stanic.miris.utils.bot.PINK_ARROW_RIGHT
 import stanic.miris.utils.getTime
 import stanic.miris.utils.replyDeleting
 
@@ -51,8 +53,8 @@ private suspend fun CommandExecutor.runQueueCommand() {
         .setDescription("<:menu:781976446418812958> Here's the track list **-** Page $currentPage \n\n\uD83C\uDFA7 **Playing now**: ${playingNow.track.info.title} \n⏳ **Time left:** ${getTime(System.currentTimeMillis() - playingNow.startedTime)} \n\uD83D\uDCCC **Requested by:** ${playingNow.member.asMention} \n\n\n$queueList")
         .build()).await()
     if (tracks.isNotEmpty()) {
-        queueMessage.addReaction("◀").queue()
-        queueMessage.addReaction("⏭").queue()
+        queueMessage.addReaction(PINK_ARROW_LEFT).queue()
+        queueMessage.addReaction(PINK_ARROW_RIGHT).queue()
     } else canDispose = true
 
     queueList.clear()
@@ -65,7 +67,7 @@ private suspend fun CommandExecutor.runQueueCommand() {
     setup {
         on<GuildMessageReactionAddEvent>().asFlow()
             .filter { it.messageIdLong == queueMessage.idLong }
-            .filterNot { it.reactionEmote.name == "⏭" || it.reactionEmote.name == "◀" }
+            .filterNot { it.reactionEmote.name == PINK_ARROW_RIGHT.name || it.reactionEmote.name == PINK_ARROW_LEFT.name }
             .onEach { it.reaction.removeReaction(it.user).submit().await() }
             .launchIn(GlobalScope)
     }
@@ -75,7 +77,7 @@ private suspend fun CommandExecutor.runQueueCommand() {
             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                 .filter { it.messageIdLong == queueMessage.idLong }
                 .filter { !it.user.isBot }
-                .filter { it.reactionEmote.name == "⏭" || it.reactionEmote.name == "◀" }
+                .filter { it.reactionEmote.name == PINK_ARROW_RIGHT.name || it.reactionEmote.name == PINK_ARROW_LEFT.name }
                 .awaitFirst()
         } ?: fail {
             canDispose = true
@@ -83,8 +85,8 @@ private suspend fun CommandExecutor.runQueueCommand() {
         }
 
         when (choice.reactionEmote.name) {
-            "⏭" -> currentPage += 1
-            "◀" -> if (currentPage == 1) currentPage = 1 else currentPage -= 1
+            PINK_ARROW_RIGHT.name -> currentPage += 1
+            PINK_ARROW_LEFT.name -> if (currentPage == 1) currentPage = 1 else currentPage -= 1
         }
         choice.reaction.removeReaction(member.user).queue()
 

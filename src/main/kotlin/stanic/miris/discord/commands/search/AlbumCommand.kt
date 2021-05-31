@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import stanic.miris.Main
 import stanic.miris.utils.*
+import stanic.miris.utils.bot.*
 
 fun CommandListDefinition.registerAlbumCommand() {
     command("album") { runAlbumCommand() }
@@ -67,12 +68,12 @@ private suspend fun CommandExecutor.runAlbumCommand() {
             .launchIn(GlobalScope)
         on<GuildMessageReactionAddEvent>().asFlow()
             .filter { it.messageIdLong == searchMessage.idLong }
-            .filterNot { searchReactions.containsKey(it.reactionEmote.name) || it.reactionEmote.name == "\uD83D\uDCA1" }
+            .filterNot { SEARCH_REACTIONS.containsKeyWithName(it.reactionEmote.name) || it.reactionEmote.name == "\uD83D\uDCA1" }
             .onEach { it.reaction.removeReaction(it.user).submit().await() }
             .launchIn(GlobalScope)
     }
 
-    searchReactions.keys.take(searchResult.size).forEach { searchMessage.addReaction(it).queue() }
+    SEARCH_REACTIONS.keys.take(searchResult.size).forEach { searchMessage.addReaction(it).queue() }
     searchMessage.addReaction("\uD83D\uDCA1").queue()
 
     searchList.clear()
@@ -82,7 +83,7 @@ private suspend fun CommandExecutor.runAlbumCommand() {
             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                 .filter { it.messageIdLong == searchMessage.idLong }
                 .filter { !it.user.isBot }
-                .filter { searchReactions.containsKey(it.reactionEmote.name) || it.reactionEmote.name == "\uD83D\uDCA1" }
+                .filter { SEARCH_REACTIONS.containsKeyWithName(it.reactionEmote.name) || it.reactionEmote.name == "\uD83D\uDCA1" }
                 .awaitFirst()
         } ?: fail {
             canDispose = true
@@ -138,12 +139,12 @@ private suspend fun CommandExecutor.runAlbumCommand() {
                     .setDescription("<:menu:781976446418812958> Here's the albums list **-** Select the right one by clicking on the emote for his position \n\n$searchList")
                     .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                     .build()).await()
-                searchReactions.keys.take(searchResult.size).forEach { searchMessage.addReaction(it).queue() }
+                SEARCH_REACTIONS.keys.take(searchResult.size).forEach { searchMessage.addReaction(it).queue() }
                 searchMessage.addReaction("\uD83D\uDCA1").queue()
             }
             else -> {
                 try {
-                    val album = Main.INSTANCE.searchManager.getAlbum(searchResult[searchReactions[choice.reactionEmote.name]!!].id)!!
+                    val album = Main.INSTANCE.searchManager.getAlbum(searchResult[SEARCH_REACTIONS[choice.reactionEmote.emote]!!].id)!!
 
                     var tracks = ""
                     album.tracks.items.forEach { tracks = "$tracks - **${it.name}** (${it.trackNumber}) \n" }

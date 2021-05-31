@@ -23,6 +23,7 @@ import stanic.miris.downloader.YoutubeDownloaderService
 import stanic.miris.downloader.callback.DownloaderCallback
 import stanic.miris.manager.getMusicManager
 import stanic.miris.utils.*
+import stanic.miris.utils.bot.*
 import java.io.File
 
 fun CommandListDefinition.registerDownloadCommand() {
@@ -43,11 +44,11 @@ private suspend fun CommandExecutor.runDownloadCommand() {
     var loadedMessage = channel.sendMessage(EmbedBuilder()
         .setTitle("Download")
         .setColor(LIGHT_PINK_COLOR)
-        .setDescription("<:search:807337010338988083> Here's the download information \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\n**Click on the emote for the format to download** \n  __-__ **Audio (MP3):** 1️⃣ \n   __-__ **Video (MP4):** 2️⃣ \n\nIf you want to do a new search click on \uD83D\uDCA1")
+        .setDescription("<:search:807337010338988083> Here's the download information \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\n**Click on the emote for the format to download** \n  __-__ **Audio (MP3):** ${NUMBER_ONE.asMention} \n   __-__ **Video (MP4):** ${NUMBER_TWO.asMention} \n\nIf you want to do a new search click on \uD83D\uDCA1")
         .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
         .build()).await()
-    loadedMessage.addReaction("1️⃣").queue()
-    loadedMessage.addReaction("2️⃣").queue()
+    loadedMessage.addReaction(NUMBER_ONE).queue()
+    loadedMessage.addReaction(NUMBER_TWO).queue()
     loadedMessage.addReaction("\uD83D\uDCA1").queue()
 
     setup {
@@ -56,7 +57,7 @@ private suspend fun CommandExecutor.runDownloadCommand() {
             .launchIn(GlobalScope)
         on<GuildMessageReactionAddEvent>().asFlow()
             .filter { it.messageIdLong == loadedMessage.idLong }
-            .filterNot { it.reactionEmote.name == "1️⃣" || it.reactionEmote.name == "2️⃣" || it.reactionEmote.name == "\uD83D\uDCA1" }
+            .filterNot { it.reactionEmote.name == NUMBER_ONE.name || it.reactionEmote.name == NUMBER_TWO.name || it.reactionEmote.name == "\uD83D\uDCA1" }
             .onEach { it.reaction.removeReaction(it.user).submit().await() }
             .launchIn(GlobalScope)
     }
@@ -66,7 +67,7 @@ private suspend fun CommandExecutor.runDownloadCommand() {
             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                 .filter { it.messageIdLong == loadedMessage.idLong }
                 .filter { !it.user.isBot }
-                .filter { it.reactionEmote.name == "1️⃣" || it.reactionEmote.name == "2️⃣" || it.reactionEmote.name == "\uD83D\uDCA1" }
+                .filter { it.reactionEmote.name == NUMBER_ONE.name || it.reactionEmote.name == NUMBER_TWO.name || it.reactionEmote.name == "\uD83D\uDCA1" }
                 .awaitFirst()
         } ?: fail {
             if (!canDispose) {
@@ -112,17 +113,17 @@ private suspend fun CommandExecutor.runDownloadCommand() {
             loadedMessage.editMessage(EmbedBuilder()
                 .setTitle("Download")
                 .setColor(LIGHT_PINK_COLOR)
-                .setDescription("<:search:807337010338988083> Here's the download information \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\n**Click on the emote for the format to download** \n  __-__ **Audio (MP3):** 1️⃣ \n   __-__ **Video (MP4):** 2️⃣ \n\nIf you want to do a new search click on \uD83D\uDCA1")
+                .setDescription("<:search:807337010338988083> Here's the download information \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\n**Click on the emote for the format to download** \n  __-__ **Audio (MP3):** ${NUMBER_ONE.asMention} \n   __-__ **Video (MP4):** ${NUMBER_TWO.asMention} \n\nIf you want to do a new search click on \uD83D\uDCA1")
                 .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                 .build()).queue()
-            loadedMessage.addReaction("1️⃣").queue()
-            loadedMessage.addReaction("2️⃣").queue()
+            loadedMessage.addReaction(NUMBER_ONE).queue()
+            loadedMessage.addReaction(NUMBER_TWO).queue()
             loadedMessage.addReaction("\uD83D\uDCA1").queue()
         } else {
             loadedMessage.delete().queue()
             loadedMessage = channel.sendMessage("<a:loading:834462333337993226> | Downloading...").complete()
 
-            YoutubeDownloaderService().download(loadedTrack.track.info.identifier, choice.reactionEmote.name == "1️⃣", object : DownloaderCallback {
+            YoutubeDownloaderService().download(loadedTrack.track.info.identifier, choice.reactionEmote.name == NUMBER_ONE.name, object : DownloaderCallback {
                 override fun onError(throwable: Throwable) {
                     loadedMessage.editMessage(":x: | An error as occurred (${throwable.cause.toString()})").queue()
                 }

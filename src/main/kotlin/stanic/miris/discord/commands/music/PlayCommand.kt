@@ -21,6 +21,7 @@ import stanic.miris.Main
 import stanic.miris.manager.getMusicManager
 import stanic.miris.utils.LIGHT_PINK_COLOR
 import stanic.miris.utils.await
+import stanic.miris.utils.bot.*
 import stanic.miris.utils.getTime
 import stanic.miris.utils.replyDeleting
 
@@ -63,11 +64,11 @@ private suspend fun CommandExecutor.runPlayCommand() {
     val loadedMessage = channel.sendMessage(EmbedBuilder()
         .setTitle("Confirm")
         .setColor(LIGHT_PINK_COLOR)
-        .setDescription("<:search:807337010338988083> I searched for what you said, is that what you were looking for? \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\nIf so, click ✅ to ${if (musicManager.getGuildPlayer(guild).playingTrack == null) "add to the queue" else "play"}. If not click on ❌ to do a new search")
+        .setDescription("<:search:807337010338988083> I searched for what you said, is that what you were looking for? \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\nIf so, click ${YES_PINK.asMention} to ${if (musicManager.getGuildPlayer(guild).playingTrack == null) "add to the queue" else "play"}. If not click on ${NO_PINK.asMention} to do a new search")
         .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
         .build()).await()
-    loadedMessage.addReaction("✅").queue()
-    loadedMessage.addReaction("❌").queue()
+    loadedMessage.addReaction(YES_PINK).queue()
+    loadedMessage.addReaction(NO_PINK).queue()
 
     setup {
         on<GuildMessageReceivedEvent>().asFlow()
@@ -75,7 +76,7 @@ private suspend fun CommandExecutor.runPlayCommand() {
             .launchIn(GlobalScope)
         on<GuildMessageReactionAddEvent>().asFlow()
             .filter { it.messageIdLong == loadedMessage.idLong }
-            .filterNot { it.reactionEmote.name == "✅" || it.reactionEmote.name == "❌" }
+            .filterNot { it.reactionEmote.name == YES_PINK.name || it.reactionEmote.name == NO_PINK.name }
             .onEach { it.reaction.removeReaction(it.user).submit().await() }
             .launchIn(GlobalScope)
     }
@@ -85,7 +86,7 @@ private suspend fun CommandExecutor.runPlayCommand() {
             Main.INSTANCE.manager.on<GuildMessageReactionAddEvent>()
                 .filter { it.messageIdLong == loadedMessage.idLong }
                 .filter { !it.user.isBot }
-                .filter { it.reactionEmote.name == "✅" || it.reactionEmote.name == "❌" }
+                .filter { it.reactionEmote.name == YES_PINK.name || it.reactionEmote.name == NO_PINK.name }
                 .awaitFirst()
         } ?: fail {
             canDispose = true
@@ -94,14 +95,14 @@ private suspend fun CommandExecutor.runPlayCommand() {
         }
 
         when (choice.reactionEmote.name) {
-            "✅" -> {
+            YES_PINK.name -> {
                 musicManager.getGuildTrackScheduler(guild).queue(loadedTrack.track, member, channel)
                 try {
                     loadedMessage.delete().queue()
                 } catch (ignored: Exception) {}
                 canDispose = true
             }
-            "❌" -> {
+            NO_PINK.name -> {
                 val embed = EmbedBuilder()
                     .setTitle("New query")
                     .setColor(LIGHT_PINK_COLOR)
@@ -136,11 +137,11 @@ private suspend fun CommandExecutor.runPlayCommand() {
                 loadedMessage.editMessage(EmbedBuilder()
                     .setTitle("Confirm")
                     .setColor(LIGHT_PINK_COLOR)
-                    .setDescription("<:search:807337010338988083> I searched for what you said, is that what you were looking for? \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\nIf so, click ✅ to ${if (musicManager.getGuildPlayer(guild).playingTrack == null) "add to the queue" else "play"}. If not click on ❌ to do a new search")
+                    .setDescription("<:search:807337010338988083> I searched for what you said, is that what you were looking for? \n\n__**Information**__ \n\uD83C\uDFA7 **Title:** ${loadedTrack.track.info.title} \n⏳ **Duration:** ${getTime(loadedTrack.track.duration)} \n<:youtube:807338481990500462> **Youtube link:** [click here](${loadedTrack.track.info.uri}) \n\n\uD83D\uDCCC **Your search:** ${query.replace("ytsearch: ", "")} \n\n\nIf so, click ${YES_PINK.asMention} to ${if (musicManager.getGuildPlayer(guild).playingTrack == null) "add to the queue" else "play"}. If not click on ${NO_PINK.asMention} to do a new search")
                     .setFooter("Requested by ${member.nickname ?: member.user.name}", member.user.avatarUrl)
                     .build()).queue()
-                loadedMessage.addReaction("✅").queue()
-                loadedMessage.addReaction("❌").queue()
+                loadedMessage.addReaction(YES_PINK).queue()
+                loadedMessage.addReaction(NO_PINK).queue()
             }
         }
     }
