@@ -35,10 +35,10 @@ private suspend fun CommandExecutor.runDownloadCommand() {
     if (args.isEmpty()) fail { channel.replyDeleting(":x: | Use **$label** (query or link)") }
 
     val musicManager = getMusicManager()
-    var query = "ytsearch: "
+    var query = ""
     for (content in args.indices) query += "${args[content]} "
 
-    var loadedTrack = musicManager.loadWaiting(query, member, channel) ?: fail {}
+    var loadedTrack = musicManager.load(query, member, channel, true) ?: fail {}
     var canDispose = false
 
     var loadedMessage = channel.sendMessage(EmbedBuilder()
@@ -106,8 +106,8 @@ private suspend fun CommandExecutor.runDownloadCommand() {
                 }
             }
 
-            query = "ytsearch: ${newQuery.message.contentRaw}"
-            loadedTrack = musicManager.loadWaiting(query, member, channel) ?: fail {}
+            query = newQuery.message.contentRaw
+            loadedTrack = musicManager.load(query, member, channel, true) ?: fail {}
 
             newQuery.message.delete().queue()
             loadedMessage.editMessage(EmbedBuilder()

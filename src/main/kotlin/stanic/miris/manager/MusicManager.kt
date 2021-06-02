@@ -7,12 +7,16 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 import stanic.miris.music.AudioPlayerSendHandler
 import stanic.miris.music.TrackScheduler
+import stanic.miris.music.loader.TrackLoader
 import stanic.miris.music.model.TrackModel
 import stanic.miris.utils.replyDeleting
 import java.util.AbstractMap
@@ -54,73 +58,25 @@ class MusicManager {
         guild.audioManager.closeAudioConnection()
     }
 
-    fun load(identifier: String, member: Member, channel: TextChannel) {
+    fun load(identifier: String, member: Member, channel: TextChannel, await: Boolean = false): TrackModel? {
+        val trackLoader = TrackLoader(this)
         val guild = member.guild
         getGuildPlayer(guild)
 
-        val trackScheduler = getGuildTrackScheduler(guild)
+        if (!await && isUrl(identifier)) {
+            trackLoader.load(identifier.replace(" ", ""), member, channel)
+            return null
+        }
 
-        channel.sendTyping().queue()
-        playerManager.loadItemOrdered(trackScheduler, identifier, object : AudioLoadResultHandler {
-            override fun trackLoaded(track: AudioTrack) {
-                trackScheduler.queue(track, member, channel)
-            }
-            override fun playlistLoaded(playlist: AudioPlaylist) {
-                when {
-                    playlist.selectedTrack != null -> trackLoaded(playlist.selectedTrack)
-                    playlist.isSearchResult -> trackLoaded(playlist.tracks[0])
-                    else -> {
-                        channel.replyDeleting("Loading **${playlist.tracks.size}** tracks...")
-                        for (track in playlist.tracks) {
-                            trackScheduler.queue(track, member, channel, true)
-                        }
-                        trackScheduler.run {
-                            if (audioPlayer.playingTrack == null) audioPlayer.playTrack(queueList.element().track)
-                        }
-                    }
-                }
-            }
-
-            override fun noMatches() {
-                channel.replyDeleting(":x: | I couldn't find anything with the information you gave. Try again later...")
-            }
-            override fun loadFailed(exception: FriendlyException) {
-                channel.replyDeleting(":x: | An error has been occurred! Exception: ${exception.message}")
-            }
-        })
+        val loaded = GlobalScope.async { trackLoader.query<AudioTrack>("ytsearch: $identifier", getGuildTrackScheduler(guild), channel) }
+        return runBlocking {
+            val track = loaded.await()
+            if (track != null) TrackModel(track, member, channel)
+            else null
+        }
     }
 
-    suspend fun loadWaiting(identifier: String, member: Member, channel: TextChannel): TrackModel? {
-        val guild = member.guild
-        var trackModel: TrackModel? = null
-        getGuildPlayer(guild)
-
-        val trackScheduler = getGuildTrackScheduler(guild)
-
-        channel.sendTyping().queue()
-        val loaded = playerManager.loadItem(identifier, object : AudioLoadResultHandler {
-            override fun trackLoaded(track: AudioTrack) {
-                trackModel = TrackModel(track, member, channel)
-            }
-            override fun playlistLoaded(playlist: AudioPlaylist) {
-                when {
-                    playlist.selectedTrack != null -> trackLoaded(playlist.selectedTrack)
-                    playlist.isSearchResult -> trackLoaded(playlist.tracks[0])
-                    else -> for (track in playlist.tracks) trackScheduler.queue(track, member, channel)
-                }
-            }
-
-            override fun noMatches() {
-                channel.replyDeleting(":x: | I couldn't find anything with the information you gave. Try again later...")
-            }
-            override fun loadFailed(exception: FriendlyException) {
-                channel.replyDeleting(":x: | An error has been occurred! Exception: ${exception.message}")
-            }
-        })
-        while (!loaded.isDone) delay(200)
-
-        return trackModel
-    }
+    private fun isUrl(identifier: String) = identifier.startsWith("http://") || identifier.startsWith("https://")
 
     companion object {
         lateinit var INSTANCE: MusicManager

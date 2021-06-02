@@ -52,13 +52,7 @@ private suspend fun CommandExecutor.runPlayCommand() {
 
     message.delete().queue()
 
-    if (query.startsWith("http")) {
-        musicManager.load(query.replace(" ", ""), member, channel)
-        return
-    }
-    query = "ytsearch: $query"
-
-    var loadedTrack = musicManager.loadWaiting(query, member, channel) ?: fail {}
+    var loadedTrack = musicManager.load(query, member, channel) ?: fail {}
     var canDispose = false
 
     val loadedMessage = channel.sendMessage(EmbedBuilder()
@@ -129,8 +123,8 @@ private suspend fun CommandExecutor.runPlayCommand() {
                     }
                 }
 
-                query = "ytsearch: ${newQuery.message.contentRaw}"
-                loadedTrack = musicManager.loadWaiting(query, member, channel) ?: fail {}
+                query = newQuery.message.contentRaw
+                loadedTrack = musicManager.load(query, member, channel) ?: fail {}
 
                 newQuery.message.delete().queue()
 
