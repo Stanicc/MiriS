@@ -1,0 +1,9 @@
+/website/next-env.d.ts
+/website/.eslintrc
+/website/node_modules/
+/website/.next/
+/temp-download/
+/libs/
+/build/
+/.idea/
+/.gradle/
